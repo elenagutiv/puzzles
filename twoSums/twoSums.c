@@ -105,29 +105,6 @@ int ht_get(ht_t *hashTable, const char* key, unsigned int *value){
     return -1;
 }
 
-
-/**
- * Note: The returned array must be malloced, assume caller calls free().
- */
-int* bruteForceTwoSum(int* nums, int numsSize, int target, int* returnSize){
-    int *returnNums = (int*) malloc(sizeof(int)*2);
-    int sum, i,j;
-    *returnSize = 2;
-    for(i = 0; i < numsSize-1; i++){
-        for(j = i+1; j < numsSize; j++){
-            sum = nums[i] + nums[j];
-            if(sum == target){
-                returnNums[0] = i;
-                returnNums[1] = j;
-                return returnNums;
-            }
-        }
-    }
-    printf("Not two sum solution");
-    return NULL;
-    
-}
-
 void ht_print(ht_t *hashTable){
     int i = 0;
     entry_t *entry;
@@ -145,41 +122,183 @@ void ht_print(ht_t *hashTable){
     }
     return;
 }
+static void ll_free(entry_t * ll){
+    if(ll == NULL){
+        return;
+    }else{
+        ll_free(ll->next);
+        free(ll->key);
+        free(ll);
+        return;
+    }
+}
 
-// int* twoPassHashTableTwoSum(int* nums, int numsSize, int target, int* returnSize){
+void ht_free(ht_t *hashTable){
+    int i = 0;
+    for(; i < TABLE_SIZE; i++){
+        entry_t *entry = hashTable->entries[i];
+        if(entry == NULL){
+            continue;
+        }else{
+            ll_free(entry);
+        }
+    }
+    free(hashTable->entries);
+    free(hashTable);
+}
 
-// }
+
+/**
+ * Note: The returned array must be malloced, assume caller calls free().
+ */
+int* bruteForceTwoSum(int* nums, int numsSize, int target, int* returnSize){
+    int *returnNums = malloc(sizeof(int)*2);
+    if(returnNums == NULL){
+        printf("Error in malloc @ bruteForceTwoSum.\n");
+        return NULL;
+    }
+    int sum, i,j;
+    *returnSize = 2;
+    for(i = 0; i < numsSize-1; i++){
+        for(j = i+1; j < numsSize; j++){
+            sum = nums[i] + nums[j];
+            if(sum == target){
+                returnNums[0] = i;
+                returnNums[1] = j;
+                return returnNums;
+            }
+        }
+    }
+    printf("Not two sum solution");
+    return NULL;
+    
+}
+
+// Note: This solution to the problem must assume that the array of integers nums *does not contain duplicates*
+// Otherwise, since we are initializing the hashTable in the first pass, the second duplicate will overwrite the
+// first one, which will produce unexpected behaviour.
+
+// The one-pass-hash solution avoids this case as every element is introduced in the hash table only when
+// we check that it is not the second index of a solution.
+// Note that, because the solution is unique, two duplicates are either both part of the solution or any of the elements belongs to the solution
+// Thus, if we encounter the second duplicate, we check whether both duplicates are a solution.
+// If it is the case, we return the solution.
+// If not, we can store it safely in the hash table, rewritting the previous value, as it will not be part of the solution
+
+int *twoPassHashTableTwoSum(ht_t *hashTable, int *nums, int numsSize, int target, int *returnSize){
+    int *returnNums = malloc(sizeof(int)*2);
+    if(returnNums == NULL){
+        printf("Error in malloc @ twoPassHashTableTwoSum.\n");
+        return NULL;
+    }
+    *returnSize = 2;
+    int i = 0;
+    char key_char[MAX_LENGTH_NUMBER+2]; // counts the sign and '\0'
+    char complement_char[MAX_LENGTH_NUMBER+2]; 
+
+    int complement;
+    int unsigned value;
+    for(; i < numsSize; i++){
+        sprintf(key_char, "%d", nums[i]);
+        ht_set(hashTable, key_char, i);
+    }
+    // ht_print(hashTable);
+    for(i = 0; i < numsSize; i++){
+        complement = target - nums[i];
+        sprintf(complement_char, "%d", complement);
+        if(ht_get(hashTable, complement_char, &value) == -1){ // complement is not an element in numsSize
+            continue;
+        }else{
+            returnNums[0] = i;
+            returnNums[1] = value;
+            return returnNums;
+        }
+    }
+    printf("Not two sum solution");
+    return NULL;
+}
+
+int *onePassHashTableTwoSum(ht_t *hashTable, int *nums, int numsSize, int target, int *returnSize){
+    int *returnNums = malloc(sizeof(int)*2);
+    if(returnNums == NULL){
+        printf("Error in malloc @ twoPassHashTableTwoSum.\n");
+        return NULL;
+    }
+    *returnSize = 2;
+    int i = 0;
+    char key_char[MAX_LENGTH_NUMBER+2]; // counts the sign and '\0'
+    char complement_char[MAX_LENGTH_NUMBER+2];
+
+    int complement;
+    int unsigned value;
+
+    for(; i < numsSize; i++){
+        
+        complement = target - nums[i];
+        sprintf(complement_char, "%d", complement);
+        if(ht_get(hashTable, complement_char, &value) == -1){ // complement is not an element in numsSize currently
+            sprintf(key_char, "%d", nums[i]);
+            ht_set(hashTable, key_char, i);
+            continue;
+        }else{
+            returnNums[0] = i;
+            returnNums[1] = value;
+            return returnNums;
+        }
+
+    }
+    printf("Not two sum solution");
+    return NULL;
+}
 
 void printSolution(int* returnNums, int returnSize){
     printf("[");
     for (int i = 0; i < returnSize; i++){
-        printf("%d\t", returnNums[i]);
+        if(i == returnSize-1){
+            printf("%d", returnNums[i]);
+        }else{
+            printf("%d\t", returnNums[i]);
+        }
     }
     printf("]\n");
 }
 int main(void) { 
    
   // keep this function call here
-  int A[] = {2,7,11,15}, returnSize, returnNums;
-  int target = 9;
+  int A[] = {3, 3, 2, 8}, returnSize;
+  int *returnNums;
+  int target = 10;
   int arrLength = sizeof(A) / sizeof(*A);
-  // returnNums = bruteForceTwoSum(A, arrLength, targey, returnSize);
+
+  // Solution 1:
+
+  // returnNums = bruteForceTwoSum(A, arrLength, target, &returnSize);
   // if(returnNums != NULL){
   //   printSolution(returnNums, returnSize);
   // }
+  // free(returnNums);
+
   // Note from the problem: you may assume that each input would have exactly one solution
   // That means that no two elements in the array are equal and thus, every key is different.
   ht_t *hashTable = ht_create();
 
-  
-  char key_i[MAX_LENGTH_NUMBER+2]; // counts the sign and '\0'
-  int i = 0;
-  for(; i < arrLength; i++){
-    sprintf(key_i, "%d", A[i]);
-    ht_set(hashTable, key_i, i);
+  // Solution 2:
+
+  // returnNums = twoPassHashTableTwoSum(hashTable, A, arrLength, target, &returnSize);
+  // if(returnNums != NULL){
+  //   printSolution(returnNums, returnSize);
+  // }
+  // free(returnNums);
+
+  // Solution 3:
+
+  returnNums = onePassHashTableTwoSum(hashTable, A, arrLength, target, &returnSize);
+  if(returnNums != NULL){
+    printSolution(returnNums, returnSize);
   }
-  
-  ht_print(hashTable);
+  free(returnNums);
+  ht_free(hashTable);
+
   
   return 0;
     
