@@ -3,8 +3,8 @@
 
 class Solution(object):
 
-	A = [1,2,3,4,1]
-	k = 4
+	A = [1,2,3,1,2,3]
+	k = 2
 
 # Time Complexity: O(n)
 # Space Complexity: O(n)
@@ -19,6 +19,23 @@ class Solution(object):
 				ht[A[i]] = i
 		return False
 
-	print(containsDuplicatesII(A,k))
+	# print(containsDuplicatesII(A,k))
+
+# Optimized version since len(ht) <= k always.
+# Time Complexity: O(n)
+# Space Complexity: O(min(n,k)) (it will be n if n < k)
+	def containsDuplicatesIIOptimized(A,k):
+		ht = dict()
+		for i in range(len(A)):
+			if (A[i] in ht):
+				return True
+			ht[A[i]] = i
+			if len(ht) > k: # A[i] not in ht and len(ht) >= k
+				del ht[A[i-k]]
+		return False
+
+	print(containsDuplicatesIIOptimized(A,k))
+
+
 
 
