@@ -2,26 +2,23 @@
 # If you were only permitted to complete at most one transaction (i.e., buy one and sell one share of the stock), design an algorithm to find the maximum profit.
 # Note that you cannot sell a stock before you buy one.
 class Solution(object):
-	A = [2,7,1,4]
+	A = [5,4,3,2,1]
 
-	# Time complexity: O(n) as only one pass is needed
-	# Space complexity O(1) as we only need to store 3 variables: im, jm and maxProfit
+	
 	def maxProfit(A):
-		(i,j) = (len(A)-2, len(A)-1)
+		(peak,valley) = (A[0], A[0])
+		i = 0
 		maxProfit = 0
-		#for i,j in zip(range(len(A)), range(len(A)-1, -1, -1)):
-		while i >= 0 :
-			diff = A[j] - A[i]
-			if diff > 0:
-				if maxProfit < diff:
-					maxProfit = diff
-					(im, jm) = (i,j)
-				i = i-1
-			else:
-				j = j-1
-				if i == j:
-					i = i-1
 
+		while(i < len(A) -1):
+			while (i < len(A) - 1) and (A[i] >= A[i+1]): # climb down
+				i = i + 1
+			valley = A[i]
+			while(i < len(A) - 1) and (A[i] <= A[i+1]): # climb up
+				i = i + 1
+			peak = A[i]
+			if maxProfit < (peak - valley): # update max profit
+				maxProfit = peak - valley
 		return maxProfit
 
 	print(maxProfit(A))

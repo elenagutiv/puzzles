@@ -4,23 +4,34 @@
 class Solution(object):
 	A = [7,1,5,3,6,4]
 
-	# Time complexity: O(n) as only one pass is needed
-	# Space complexity O(1) as we only need to store 3 variables: im, jm and maxProfit
-	def maxProfit(A):
-		(i,j) = (len(A)-2, len(A)-1)
-		(totalProfit, prev_diff, diff) = (0, 0, -1)
-		#for i,j in zip(range(len(A)), range(len(A)-1, -1, -1)):
-		while i >= 0 :
-			diff = A[j] - A[i]
-			if diff < 0 or prev_diff > diff: # reset
-				totalProfit = totalProfit + prev_diff			
-				(j, i) = (i, j-1)
-				prev_diff = 0
-			else: #diff >= 0 and prev_diff <= diff:
-				i = i-1
-				prev_diff = diff
-		if diff >= 0 and prev_diff <= diff:
-			totalProfit = totalProfit + prev_diff	
-		return totalProfit
+	# SIMPLE SOLUTION I
+	def maxProfitII(A):
+		(peak, valley) = (A[0], A[0])
+		maxProfit = 0
+		i = 0
 
-	print(maxProfit(A))
+		while i < len(A)-1:
+			while (i < (len(A) - 1)) and (A[i] >= A[i+1]): # climbing down
+				i = i + 1
+			valley = A[i]
+			while (i < (len(A) - 1)) and (A[i] <= A[i+1]): # climbing up
+				i = i + 1
+			peak = A[i]
+			maxProfit = maxProfit + (peak - valley)
+		return maxProfit
+
+	print(maxProfitII(A))
+
+	# SIMPLE & *CLEAN* SOLUTION II
+	def maxProfitIIClean(A):
+
+		(peak, valley) = (A[0], A[0])
+		maxProfit = 0
+		i = 0
+
+		while i < len(A)-1:
+			if A[i] < A[i+1]:
+				maxProfit = maxProfit + (A[i+1] - A[i])
+			i = i + 1
+		return maxProfit
+	print(maxProfitIIClean(A))
